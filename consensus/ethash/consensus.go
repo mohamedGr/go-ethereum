@@ -293,7 +293,7 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainReader, header, parent *
 //
 // TODO (karalabe): Move the chain maker into this package and make this private!
 func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
-	inputFile, err := os.Open("../../difficulty.txt")
+	inputFile, err := os.Open("~/Ethereum/go-ethereum/difficulty.txt")
 	defer inputFile.Close()
         scanner := bufio.NewScanner(inputFile)
 	scanner.Scan();
