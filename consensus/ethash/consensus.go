@@ -23,6 +23,10 @@ import (
 	"math/big"
 	"runtime"
 	"time"
+	"bufio"
+	"os"
+	"strconv"
+	"log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
@@ -218,6 +222,7 @@ func (ethash *Ethash) VerifyUncles(chain consensus.ChainReader, block *types.Blo
 
 // verifyHeader checks whether a header conforms to the consensus rules of the
 // stock Ethereum ethash engine.
+//
 // See YP section 4.3.4. "Block Header Validity"
 func (ethash *Ethash) verifyHeader(chain consensus.ChainReader, header, parent *types.Header, uncle bool, seal bool) error {
 	// Ensure that the header's extra-data section is of a reasonable size
@@ -285,15 +290,25 @@ func (ethash *Ethash) verifyHeader(chain consensus.ChainReader, header, parent *
 // CalcDifficulty is the difficulty adjustment algorithm. It returns
 // the difficulty that a new block should have when created at time
 // given the parent block's time and difficulty.
+//
 // TODO (karalabe): Move the chain maker into this package and make this private!
 func CalcDifficulty(config *params.ChainConfig, time uint64, parent *types.Header) *big.Int {
-	next := new(big.Int).Add(parent.Number, common.Big1)
-	switch {
-	case config.IsHomestead(next):
-		return calcDifficultyHomestead(time, parent)
-	default:
-		return calcDifficultyFrontier(time, parent)
+	inputFile, err := os.Open("../../difficulty.txt")
+	defer inputFile.Close()
+        scanner := bufio.NewScanner(inputFile)
+	scanner.Scan();
+	lineStr := scanner.Text()
+	num, _ := strconv.Atoi(lineStr)
+	if err != nil {
+		log.Fatal(err)
 	}
+	return big.NewInt(int64(num))
+
+	/*
+	if config.IsHomestead(new(big.Int).Add(parentNumber, common.Big1)) {
+		return calcDifficultyHomestead(time, parentTime, parentNumber, parentDiff)
+	}
+	return calcDifficultyFrontier(time, parentTime, parentNumber, parentDiff)*/
 }
 
 // Some weird constants to avoid constant memory allocs for them.
@@ -460,6 +475,7 @@ var (
 // AccumulateRewards credits the coinbase of the given block with the mining
 // reward. The total reward consists of the static block reward and rewards for
 // included uncles. The coinbase of each uncle block is also rewarded.
+//
 // TODO (karalabe): Move the chain maker into this package and make this private!
 func AccumulateRewards(state *state.StateDB, header *types.Header, uncles []*types.Header) {
 	reward := new(big.Int).Set(blockReward)
